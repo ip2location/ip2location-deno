@@ -21,6 +21,8 @@ As an alternative, this module can also call the IP2Location Web Service. This r
 
 https://www.ip2location.com/web-service/ip2location
 
+## Installation
+To use this library, download this repository to your local, and then copy the *mode.ts* file and the whole *src/* folder into your project root.
 
 ## QUERY USING THE BIN FILE
 
@@ -76,7 +78,7 @@ Below are the methods supported in this module.
 
 ```javascript
 
-import { IP2Location } from "https://deno.land/x/ip2location/mod.ts";
+import { IP2Location } from "./mod.ts";
 
 let ip2location = new IP2Location();
 
@@ -111,7 +113,7 @@ Below are the methods supported in this module.
 
 ```javascript
 
-import { IP2LocationWebService } from "https://deno.land/x/ip2location/mod.ts";
+import { IP2LocationWebService } from ./mod.ts";
 
 let ws = new IP2LocationWebService();
 
@@ -163,7 +165,7 @@ Below are the methods supported in this module.
 ## Usage
 
 ```javascript
-import { IPTools } from "https://deno.land/x/ip2location/mod.ts";
+import { IPTools } from "./mod.ts";
 
 let tools = new IPTools();
 
