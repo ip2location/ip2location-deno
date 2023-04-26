@@ -1,13 +1,11 @@
-import { createRequire } from "https://deno.land/std/node/module.ts";
-const require = createRequire(import.meta.url);
-
-var net = require("node:net");
-var fs = require("fs");
-var bigInt = require("big-integer");
-var https = require("https");
+import bigInt from "npm:big-integer@1.6.51";
+import * as https from "node:https";
+import * as net from "node:net";
+import { readSync, openSync, closeSync, existsSync } from "node:fs";
+import { Buffer } from 'node:buffer';
 
 // For BIN queries
-const VERSION = "8.0.1";
+const VERSION = "8.1.0";
 const MAX_INDEX = 65536;
 const COUNTRY_POSITION = [
   0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -222,14 +220,14 @@ export class IP2Location {
   // Read row data
   readRow(readBytes, position) {
     let buffer = new Buffer.alloc(readBytes);
-    let totalRead = fs.readSync(this.#fd, buffer, 0, readBytes, position - 1);
+    let totalRead = readSync(this.#fd, buffer, 0, readBytes, position - 1);
     return buffer;
   }
 
   // Read binary data
   readBin(readBytes, position, readType, isBigInt) {
     let buffer = new Buffer.alloc(readBytes);
-    let totalRead = fs.readSync(this.#fd, buffer, 0, readBytes, position);
+    let totalRead = readSync(this.#fd, buffer, 0, readBytes, position);
 
     if (totalRead == readBytes) {
       switch (readType) {
@@ -346,7 +344,8 @@ export class IP2Location {
 
     try {
       if (this.#binFile && this.#binFile != "") {
-        this.#fd = fs.openSync(this.#binFile, "r");
+        
+        this.#fd = openSync(this.#binFile, "r");
 
         let len = 64; // 64-byte header
         let row = this.readRow(len, 1);
@@ -527,7 +526,7 @@ export class IP2Location {
       this.#myDB.productCode = 0;
       this.#myDB.productType = 0;
       this.#myDB.fileSize = 0;
-      fs.closeSync(this.#fd);
+      closeSync(this.#fd);
       return 0;
     } catch (err) {
       return -1;
@@ -845,7 +844,7 @@ export class IP2Location {
     } else if (
       !this.#binFile ||
       this.#binFile == "" ||
-      !fs.existsSync(this.#binFile)
+      !existsSync(this.#binFile)
     ) {
       loadMesg(data, MSG_MISSING_FILE);
       return data;
