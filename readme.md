@@ -2,7 +2,7 @@
 
 *Note: this version only supported Deno version 1.30.0 and after.*
 
-This Deno module provides a fast lookup of country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type and IAB category from IP address by using IP2Location database. This module uses a file based database available at IP2Location.com. This database simply contains IP blocks as keys, and other information such as country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type and IAB category as values. It supports both IP address in IPv4 and IPv6.
+This Deno module provides a fast lookup of country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type, IAB category, district, autonomous system number (ASN) and autonomous system (AS) from IP address by using IP2Location database. This module uses a file based database available at IP2Location.com. This database simply contains IP blocks as keys, and other information such as country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type, IAB category, district, autonomous system number (ASN) and autonomous system (AS) as values. It supports both IP address in IPv4 and IPv6.
 
 This module can be used in many types of projects such as:
 
@@ -22,9 +22,6 @@ The free LITE database is available at https://lite.ip2location.com.
 As an alternative, this module can also call the IP2Location Web Service. This requires an API key. If you don't have an existing API key, you can subscribe for one at the below:
 
 https://www.ip2location.com/web-service/ip2location
-
-## Installation
-To use this library, download this repository to your local, and then copy the *mode.ts* file and the whole *src/* folder into your project root.
 
 ## QUERY USING THE BIN FILE
 
@@ -73,6 +70,9 @@ Below are the methods supported in this module.
 |getUsageType|Returns the usage type.|
 |getAddressType|Returns the address type.|
 |getCategory|Returns the IAB category.|
+|getDistrict|Returns the district name.|
+|getASN|Returns the autonomous system number (ASN).|
+|getAS|Returns the autonomous system (AS).|
 |close|Closes BIN file and resets metadata.|
 
 
@@ -80,7 +80,7 @@ Below are the methods supported in this module.
 
 ```javascript
 
-import { IP2Location } from "./mod.ts";
+import { IP2Location } from "https://deno.land/x/ip2location@8.1.0/mod.ts";
 
 let ip2location = new IP2Location();
 
@@ -115,7 +115,7 @@ Below are the methods supported in this module.
 
 ```javascript
 
-import { IP2LocationWebService } from ./mod.ts";
+import { IP2LocationWebService } from "https://deno.land/x/ip2location@8.1.0/mod.ts";
 
 let ws = new IP2LocationWebService();
 
@@ -167,7 +167,7 @@ Below are the methods supported in this module.
 ## Usage
 
 ```javascript
-import { IPTools } from "./mod.ts";
+import { IPTools } from "https://deno.land/x/ip2location@8.1.0/mod.ts";
 
 let tools = new IPTools();
 
