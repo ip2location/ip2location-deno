@@ -80,7 +80,7 @@ Below are the methods supported in this module.
 
 ```javascript
 
-import { IP2Location } from "https://deno.land/x/ip2location@8.1.0/mod.ts";
+import { IP2Location } from "https://deno.land/x/ip2location@8.2.0/mod.ts";
 
 let ip2location = new IP2Location();
 
@@ -115,7 +115,7 @@ Below are the methods supported in this module.
 
 ```javascript
 
-import { IP2LocationWebService } from "https://deno.land/x/ip2location@8.1.0/mod.ts";
+import { IP2LocationWebService } from "https://deno.land/x/ip2location@8.2.0/mod.ts";
 
 let ws = new IP2LocationWebService();
 
@@ -167,7 +167,7 @@ Below are the methods supported in this module.
 ## Usage
 
 ```javascript
-import { IPTools } from "https://deno.land/x/ip2location@8.1.0/mod.ts";
+import { IPTools } from "https://deno.land/x/ip2location@8.2.0/mod.ts";
 
 let tools = new IPTools();
 
