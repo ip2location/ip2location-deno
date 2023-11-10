@@ -520,4 +520,13 @@ export class IPTools {
      * @returns The array with the starting and ending IPv6 addresses.
      */
     cidrToIPV6(cidr: string): string[];
+    /**
+     * A function to convert a number between arbitrary bases.
+     *
+     * @param num The number to convert.
+     * @param fromBase The base num is in
+     * @param toBase The base to convert num to
+     * @returns num converted to base to_base
+    */
+    baseConvert(num: number, fromBase: number, toBase: number): any
 }
