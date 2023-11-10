@@ -4,7 +4,7 @@ import { readSync, openSync, closeSync, existsSync } from "node:fs";
 import { Buffer } from 'node:buffer';
 
 // For BIN queries
-const VERSION = "8.2.0";
+const VERSION = "8.2.1";
 const MAX_INDEX = 65536;
 const COUNTRY_POSITION = [
   0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
