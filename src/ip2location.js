@@ -1,10 +1,10 @@
 import * as https from "node:https";
 import * as net from "node:net";
-import { readSync, openSync, closeSync, existsSync } from "node:fs";
-import { Buffer } from 'node:buffer';
+import { existsSync } from "node:fs";
+import { Buffer } from "jsr:@std/io/buffer";
 
 // For BIN queries
-const VERSION = "8.2.1";
+const VERSION = "8.3.0";
 const MAX_INDEX = 65536;
 const COUNTRY_POSITION = [
   0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -249,40 +249,40 @@ export class IP2Location {
 
   // Read row data
   readRow(readBytes, position) {
-    let buffer = new Buffer.alloc(readBytes);
-    let totalRead = readSync(this.#fd, buffer, 0, readBytes, position - 1);
-    return buffer;
+    let buf = this.#fd.slice(position-1, position + readBytes - 1);
+    return buf;
   }
 
   // Read binary data
   readBin(readBytes, position, readType, isBigInt) {
-    let buffer = new Buffer.alloc(readBytes);
-    let totalRead = readSync(this.#fd, buffer, 0, readBytes, position);
+    let buf = this.#fd.slice(position-1, position + readBytes - 1);
+    let dataView = new DataView(buf.buffer);
 
     if (totalRead == readBytes) {
       switch (readType) {
         case "int8":
-          return buffer.readUInt8(0);
+          return dataView.getUint8(position);
           break;
         case "int32":
-          return buffer.readInt32LE(0);
+          return dataView.getInt32(position, true);
           break;
         case "uint32":
           return isBigInt
-            ? BigInt(buffer.readUInt32LE(0))
-            : buffer.readUInt32LE(0);
+            ? BigInt(dataView.getUint32(position, true))
+            : dataView.getUint32(position, true);
           break;
         case "float":
-          return buffer.readFloatLE(0);
+          return dataView.getFloat32(position, true);
           break;
         case "str":
-          return buffer.toString("utf8");
+          let decodedString = new TextDecoder().decode(buf);
+          return decodedString;
           break;
         case "int128":
           let myBig = BigInt(0); // zero
           let bitShift = 8;
           for (let x = 0; x < 16; x++) {
-            myBig = myBig + (BigInt(buffer.readUInt8(x)) << (bitShift * x));
+            myBig = myBig + (BigInt(buffer.getUint8(x)) << (bitShift * x));
           }
           return myBig;
           break;
@@ -300,7 +300,10 @@ export class IP2Location {
 
   // Read 8 bits integer in the buffer
   read8Row(position, buffer) {
-    return buffer.readUInt8(position);
+    let dataView = new DataView(buffer.buffer);
+
+    let var1 = dataView.getUint8(position);
+    return var1;
   }
 
   // Read 32 bits integer in the database
@@ -311,7 +314,32 @@ export class IP2Location {
 
   // Read 32 bits integer in the buffer
   read32Row(position, buffer) {
-    return buffer.readUInt32LE(position);
+    let dataView = new DataView(buffer.buffer);
+
+    // let var1 = dataView.getInt32(position, true);
+    let var1 = dataView.getUint32(position, true);
+    return var1;
+  }
+
+  // Read 32 bits integer in the buffer
+  read32RowForGeodata(position, buffer) {
+    let integerList = buffer;
+    
+    // Convert the list of integers to a Uint8Array (little-endian bytes)
+    let byteArray = new Uint8Array(integerList);
+    let buffer1 = new Buffer(byteArray);// Read the unsigned 32-bit integer from the buffer
+    let valueBuffer = new Uint8Array(4); // Create a buffer to hold the 32-bit value
+    if (position > 0) {
+        let slicedData = buffer1.bytes({ copy: true }).slice(position);
+        let buffer2 = new Buffer(slicedData);
+        buffer2.readSync(valueBuffer);
+    } else {
+        buffer1.readSync(valueBuffer);
+    }
+    
+    // Convert the bytes to an actual integer (little-endian)
+    const uint32Value = new DataView(valueBuffer.buffer).getUint32(0, true); // true for little-endian
+    return uint32Value;
   }
 
   // Read 128 bits integer in the buffer
@@ -354,7 +382,32 @@ export class IP2Location {
 
   // Read 32 bits float in the buffer
   readFloatRow(position, buffer) {
-    return buffer.readFloatLE(position);
+    let dataView = new DataView(buffer.buffer);
+
+    let var1 = dataView.getFloat32(position, true);
+    return var1;
+  }
+
+  // Read 32 bits float in the buffer
+  readFloatRowForGeodata(position, buffer) {
+    
+    let integerList = buffer;
+    
+    // Convert the list of integers to a Uint8Array (little-endian bytes)
+    let byteArray = new Uint8Array(integerList);
+    let buffer1 = new Buffer(byteArray);// Read the unsigned 32-bit integer from the buffer
+    let valueBuffer = new Uint8Array(4); // Create a buffer to hold the 32-bit value
+    if (position > 0) {
+        let slicedData = buffer1.bytes({ copy: true }).slice(position);
+        let buffer2 = new Buffer(slicedData);
+        buffer2.readSync(valueBuffer);
+    } else {
+        buffer1.readSync(valueBuffer);
+    }
+    
+    // Convert the bytes to an actual integer (little-endian)
+    const uint32Value = new DataView(valueBuffer.buffer).getFloat32(0, true); // true for little-endian
+    return uint32Value;
   }
 
   // Read strings in the database
@@ -362,7 +415,8 @@ export class IP2Location {
     let readBytes = 256; // max size of string field + 1 byte for the length
     let row = this.readRow(readBytes, position + 1);
     let len = this.read8Row(0, row);
-    return row.toString("utf8", 1, len + 1);
+    let decodedString = new TextDecoder().decode(row.subarray(1, len + 1));
+    return decodedString;
   }
 
   // Read metadata and indexes
@@ -371,7 +425,7 @@ export class IP2Location {
 
     try {
       if (this.#binFile && this.#binFile != "") {
-        this.#fd = openSync(this.#binFile, "r");
+        this.#fd = Deno.readFileSync(this.#binFile);
 
         let len = 64; // 64-byte header
         let row = this.readRow(len, 1);
@@ -561,7 +615,7 @@ export class IP2Location {
       this.#myDB.productCode = 0;
       this.#myDB.productType = 0;
       this.#myDB.fileSize = 0;
-      closeSync(this.#fd);
+	  this.#fd.close();
       return 0;
     } catch (err) {
       return -1;
@@ -662,14 +716,14 @@ export class IP2Location {
 
         let rowLen = columnSize - firstCol;
         row = fullRow.subarray(firstCol, firstCol + rowLen); // extract the actual row data
-
+        
         if (this.#countryEnabled) {
           if (
             mode == MODES.ALL ||
             mode == MODES.COUNTRY_SHORT ||
             mode == MODES.COUNTRY_LONG
           ) {
-            countryPosition = this.read32Row(this.#countryPositionOffset, row);
+            countryPosition = this.read32RowForGeodata(this.#countryPositionOffset, row);
           }
           if (mode == MODES.ALL || mode == MODES.COUNTRY_SHORT) {
             data.countryShort = this.readStr(countryPosition);
@@ -682,7 +736,7 @@ export class IP2Location {
         if (this.#regionEnabled) {
           if (mode == MODES.ALL || mode == MODES.REGION) {
             data.region = this.readStr(
-              this.read32Row(this.#regionPositionOffset, row)
+              this.read32RowForGeodata(this.#regionPositionOffset, row)
             );
           }
         }
@@ -690,28 +744,28 @@ export class IP2Location {
         if (this.#cityEnabled) {
           if (mode == MODES.ALL || mode == MODES.CITY) {
             data.city = this.readStr(
-              this.read32Row(this.#cityPositionOffset, row)
+              this.read32RowForGeodata(this.#cityPositionOffset, row)
             );
           }
         }
         if (this.#ispEnabled) {
           if (mode == MODES.ALL || mode == MODES.ISP) {
             data.isp = this.readStr(
-              this.read32Row(this.#ispPositionOffset, row)
+              this.read32RowForGeodata(this.#ispPositionOffset, row)
             );
           }
         }
         if (this.#domainEnabled) {
           if (mode == MODES.ALL || mode == MODES.DOMAIN) {
             data.domain = this.readStr(
-              this.read32Row(this.#domainPositionOffset, row)
+              this.read32RowForGeodata(this.#domainPositionOffset, row)
             );
           }
         }
         if (this.#zipCodeEnabled) {
           if (mode == MODES.ALL || mode == MODES.ZIP_CODE) {
             data.zipCode = this.readStr(
-              this.read32Row(this.#zipCodePositionOffset, row)
+              this.read32RowForGeodata(this.#zipCodePositionOffset, row)
             );
           }
         }
@@ -719,7 +773,7 @@ export class IP2Location {
           if (mode == MODES.ALL || mode == MODES.LATITUDE) {
             data.latitude =
               Math.round(
-                this.readFloatRow(this.#latitudePositionOffset, row) * 1000000,
+                this.readFloatRowForGeodata(this.#latitudePositionOffset, row) * 1000000,
                 6
               ) / 1000000;
           }
@@ -728,7 +782,7 @@ export class IP2Location {
           if (mode == MODES.ALL || mode == MODES.LONGITUDE) {
             data.longitude =
               Math.round(
-                this.readFloatRow(this.#longitudePositionOffset, row) * 1000000,
+                this.readFloatRowForGeodata(this.#longitudePositionOffset, row) * 1000000,
                 6
               ) / 1000000;
           }
@@ -736,111 +790,111 @@ export class IP2Location {
         if (this.#timeZoneEnabled) {
           if (mode == MODES.ALL || mode == MODES.TIME_ZONE) {
             data.timeZone = this.readStr(
-              this.read32Row(this.#timeZonePositionOffset, row)
+              this.read32RowForGeodata(this.#timeZonePositionOffset, row)
             );
           }
         }
         if (this.#netSpeedEnabled) {
           if (mode == MODES.ALL || mode == MODES.NET_SPEED) {
             data.netSpeed = this.readStr(
-              this.read32Row(this.#netSpeedPositionOffset, row)
+              this.read32RowForGeodata(this.#netSpeedPositionOffset, row)
             );
           }
         }
         if (this.#iddCodeEnabled) {
           if (mode == MODES.ALL || mode == MODES.IDD_CODE) {
             data.iddCode = this.readStr(
-              this.read32Row(this.#iddCodePositionOffset, row)
+              this.read32RowForGeodata(this.#iddCodePositionOffset, row)
             );
           }
         }
         if (this.#areaCodeEnabled) {
           if (mode == MODES.ALL || mode == MODES.AREA_CODE) {
             data.areaCode = this.readStr(
-              this.read32Row(this.#areaCodePositionOffset, row)
+              this.read32RowForGeodata(this.#areaCodePositionOffset, row)
             );
           }
         }
         if (this.#weatherStationCodeEnabled) {
           if (mode == MODES.ALL || mode == MODES.WEATHER_STATION_CODE) {
             data.weatherStationCode = this.readStr(
-              this.read32Row(this.#weatherStationCodePositionOffset, row)
+              this.read32RowForGeodata(this.#weatherStationCodePositionOffset, row)
             );
           }
         }
         if (this.#weatherStationNameEnabled) {
           if (mode == MODES.ALL || mode == MODES.WEATHER_STATION_NAME) {
             data.weatherStationName = this.readStr(
-              this.read32Row(this.#weatherStationNamePositionOffset, row)
+              this.read32RowForGeodata(this.#weatherStationNamePositionOffset, row)
             );
           }
         }
         if (this.#mccEnabled) {
           if (mode == MODES.ALL || mode == MODES.MCC) {
             data.mcc = this.readStr(
-              this.read32Row(this.#mccPositionOffset, row)
+              this.read32RowForGeodata(this.#mccPositionOffset, row)
             );
           }
         }
         if (this.#mncEnabled) {
           if (mode == MODES.ALL || mode == MODES.MNC) {
             data.mnc = this.readStr(
-              this.read32Row(this.#mncPositionOffset, row)
+              this.read32RowForGeodata(this.#mncPositionOffset, row)
             );
           }
         }
         if (this.#mobileBrandEnabled) {
           if (mode == MODES.ALL || mode == MODES.MOBILE_BRAND) {
             data.mobileBrand = this.readStr(
-              this.read32Row(this.#mobileBrandPositionOffset, row)
+              this.read32RowForGeodata(this.#mobileBrandPositionOffset, row)
             );
           }
         }
         if (this.#elevationEnabled) {
           if (mode == MODES.ALL || mode == MODES.ELEVATION) {
             data.elevation = this.readStr(
-              this.read32Row(this.#elevationPositionOffset, row)
+              this.read32RowForGeodata(this.#elevationPositionOffset, row)
             );
           }
         }
         if (this.#usageTypeEnabled) {
           if (mode == MODES.ALL || mode == MODES.USAGE_TYPE) {
             data.usageType = this.readStr(
-              this.read32Row(this.#usageTypePositionOffset, row)
+              this.read32RowForGeodata(this.#usageTypePositionOffset, row)
             );
           }
         }
         if (this.#addressTypeEnabled) {
           if (mode == MODES.ALL || mode == MODES.ADDRESS_TYPE) {
             data.addressType = this.readStr(
-              this.read32Row(this.#addressTypePositionOffset, row)
+              this.read32RowForGeodata(this.#addressTypePositionOffset, row)
             );
           }
         }
         if (this.#categoryEnabled) {
           if (mode == MODES.ALL || mode == MODES.CATEGORY) {
             data.category = this.readStr(
-              this.read32Row(this.#categoryPositionOffset, row)
+              this.read32RowForGeodata(this.#categoryPositionOffset, row)
             );
           }
         }
         if (this.#districtEnabled) {
           if (mode == MODES.ALL || mode == MODES.DISTRICT) {
             data.district = this.readStr(
-              this.read32Row(this.#districtPositionOffset, row)
+              this.read32RowForGeodata(this.#districtPositionOffset, row)
             );
           }
         }
         if (this.#asnEnabled) {
           if (mode == MODES.ALL || mode == MODES.ASN) {
             data.asn = this.readStr(
-              this.read32Row(this.#asnPositionOffset, row)
+              this.read32RowForGeodata(this.#asnPositionOffset, row)
             );
           }
         }
         if (this.#asEnabled) {
           if (mode == MODES.ALL || mode == MODES.AS) {
-            data.as = this.readStr(this.read32Row(this.#asPositionOffset, row));
+            data.as = this.readStr(this.read32RowForGeodata(this.#asPositionOffset, row));
           }
         }
         return;
