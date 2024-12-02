@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import { Buffer } from "jsr:@std/io/buffer";
 
 // For BIN queries
-const VERSION = "8.3.0";
+const VERSION = "8.3.1";
 const MAX_INDEX = 65536;
 const COUNTRY_POSITION = [
   0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -109,6 +109,8 @@ const TO_6TO4 = BigInt("42550872755692912415807417417958686719");
 const FROM_TEREDO = BigInt("42540488161975842760550356425300246528");
 const TO_TEREDO = BigInt("42540488241204005274814694018844196863");
 const LAST_32_BITS = BigInt("4294967295");
+const FROM_IPV4_MAPPED_IPV6 = BigInt("281470681743360");
+const TO_IPV4_MAPPED_IPV6 = BigInt("281474976710655");
 
 const MODES = {
   COUNTRY_SHORT: 1,
@@ -662,7 +664,8 @@ export class IP2Location {
 
       if (
         (ipNumber >= FROM_6TO4 && ipNumber <= TO_6TO4) ||
-        (ipNumber >= FROM_TEREDO && ipNumber <= TO_TEREDO)
+        (ipNumber >= FROM_TEREDO && ipNumber <= TO_TEREDO) ||
+        (ipNumber >= FROM_IPV4_MAPPED_IPV6 && ipNumber <= TO_IPV4_MAPPED_IPV6)
       ) {
         ipType = 4;
         MAX_IP_RANGE = MAX_IPV4_RANGE;
@@ -672,8 +675,10 @@ export class IP2Location {
 
         if (ipNumber >= FROM_6TO4 && ipNumber <= TO_6TO4) {
           ipNumber = Number((ipNumber >> BigInt(80)) & LAST_32_BITS);
-        } else {
+        } else if (ipNumber >= FROM_TEREDO && ipNumber <= TO_TEREDO) {
           ipNumber = Number(~ipNumber & LAST_32_BITS);
+        } else {
+          ipNumber = Number(ipNumber - FROM_IPV4_MAPPED_IPV6);
         }
         if (this.#myDB.indexed == 1) {
           indexAddress = ipNumber >>> 16;
@@ -681,6 +686,10 @@ export class IP2Location {
           high = this.#indexArrayIPV4[indexAddress][1];
         }
       } else {
+        if (this.#myDB.dbCountIPV6 == 0) {
+          loadMesg(data, MSG_IPV6_UNSUPPORTED);
+          return;
+        }
         firstCol = 16; // IPv6 is 16 bytes
         if (this.#myDB.indexedIPV6 == 1) {
           indexAddress = Number(ipNumber >> BigInt(112));
@@ -961,9 +970,6 @@ export class IP2Location {
       return data;
     } else if (this.#myDB.dbType == 0) {
       loadMesg(data, MSG_MISSING_FILE);
-      return data;
-    } else if (ipType == 6 && this.#myDB.dbCountIPV6 == 0) {
-      loadMesg(data, MSG_IPV6_UNSUPPORTED);
       return data;
     } else {
       this.geoQueryData(myIP, ipType, data, mode);
