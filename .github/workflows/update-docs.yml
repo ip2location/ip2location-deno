@@ -1,0 +1,32 @@
+name: Update Documentation
+
+on:
+  push:
+    tags:
+      - "*.*.*" # Trigger on new version tags
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          ref: main # Replace 'main' with your default branch name
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Run Update Script
+        run: deno run --allow-net --allow-read --allow-write scripts/update-docs.ts
+
+      - name: Commit Changes
+        run: |
+          git config user.name "ip2location"
+          git config user.email "support@ip2location.com"
+          git add .
+          git commit -m "Update documentation for new version"
+          git push origin main # Replace 'main' with your default branch name
