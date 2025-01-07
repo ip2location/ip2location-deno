@@ -18,7 +18,7 @@ download the BIN database at
 This library require no installation. You can just use this library like this:
 
 ```javascript
-import { IP2Location } from "https://deno.land/x/ip2location@8.3.0/mod.ts";
+import { IP2Location } from "https://deno.land/x/ip2location@8.3.1/mod.ts";
 ```
 
 ## Sample Codes
@@ -29,7 +29,7 @@ You can query the geolocation information from the IP2Location BIN database as b
 
 ```javascript
 
-import { IP2Location } from "https://deno.land/x/ip2location@8.3.0/mod.ts";
+import { IP2Location } from "https://deno.land/x/ip2location@8.3.1/mod.ts";
 
 let ip2location = new IP2Location();
 
@@ -53,7 +53,7 @@ ip2location.close();
 You can manupulate IP address, IP number and CIDR as below:
 
 ```javascript
-import { IPTools } from "https://deno.land/x/ip2location@8.3.0/mod.ts";
+import { IPTools } from "https://deno.land/x/ip2location@8.3.1/mod.ts";
 
 let tools = new IPTools();
 
