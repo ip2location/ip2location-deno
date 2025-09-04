@@ -36,3 +36,4 @@ node_modules/
 # Misc
 *.bak
 docs/build/
+scripts/update-docs.js
