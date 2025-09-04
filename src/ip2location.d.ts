@@ -352,6 +352,27 @@ export class IP2Location {
      */
     getAS(myIP: string): string;
     /**
+     * Returns the AS domain.
+     *
+     * @param myIP The IP address to query.
+     * @returns The AS domain.
+     */
+    getASDomain(myIP: string): string;
+    /**
+     * Returns the AS usage type.
+     *
+     * @param myIP The IP address to query.
+     * @returns The AS usage type.
+     */
+    getASUsageType(myIP: string): string;
+    /**
+     * Returns the AS CIDR.
+     *
+     * @param myIP The IP address to query.
+     * @returns The AS CIDR.
+     */
+    getASCidr(myIP: string): string;
+    /**
      * Returns all fields.
      *
      * @param myIP The IP address to query.
@@ -385,6 +406,9 @@ export class IP2Location {
         district: string;
         asn: string;
         as: string;
+        asDomain: string;
+        asUsageType: string;
+        asCidr: string;
     };
     #private;
 }

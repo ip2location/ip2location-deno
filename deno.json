@@ -1,0 +1,32 @@
+{
+  "name": "@ip2location/ip2location",
+  "version": "1.0.0",
+  "license": "MIT",
+  "repository": "https://github.com/ip2location/ip2location-deno",
+  "description": "Deno client library for IP2Location BIN database.",
+
+  "exports": {
+    ".": "./src/ip2location.js",
+    "./types": "./src/ip2location.d.ts"
+  },
+
+  "compilerOptions": {
+    "strict": true
+  },
+
+  "tasks": {
+    "test": "deno test -A",
+    "lint": "deno lint",
+    "check": "deno check ip2location.js"
+  },
+
+  "publish": {
+    "include": [
+      "./src/ip2location.js",
+      "./src/ip2location.d.ts",
+      "README.md",
+      "LICENSE",
+      "deno.json"
+    ]
+  }
+}

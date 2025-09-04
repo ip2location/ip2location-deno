@@ -6,7 +6,7 @@
 # -- Project information
 
 project = 'IP2Location Deno'
-copyright = '2023, IP2Location'
+copyright = '2025, IP2Location'
 author = 'IP2Location'
 
 release = '1.0.0'
