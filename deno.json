@@ -1,6 +1,6 @@
 {
   "name": "@ip2location/ip2location",
-  "version": "1.0.0",
+  "version": "8.4.0",
   "license": "MIT",
   "repository": "https://github.com/ip2location/ip2location-deno",
   "description": "Deno client library for IP2Location BIN database.",
